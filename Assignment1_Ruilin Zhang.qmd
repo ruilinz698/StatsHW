@@ -1,0 +1,227 @@
+---
+title: "Assignment 1"
+author: "Ruilin Zhang"
+format: 
+  html:
+    embed-resources: true
+editor: visual
+---
+
+## Github Link <https://github.com/ruilinz698/Stats-506/blob/main/Assignment1_Ruilin%20Zhang.qmd>
+
+## Problem 1 - Wine Data
+
+```{r}
+# Import the dataset
+wine_data <- read.csv('/Users/aa/Desktop/Umich/Stats 506/wine/wine.data', header = FALSE)
+
+# Use “wine.names” file to give appropriate column names 
+colnames(wine_data) <- c("Class", "Alcohol", "Malic_Acid", "Ash","Alcalinity_of_Ash", "Magnesium", "Total_phenols", "Flavanoids", "Nonflavanoid_phenols","Proanthocyanins", "Color_intensity", "Hue", "OD280/OD315_of_diluted_wines","Proline")
+```
+
+```{r}
+# Report the number of wines within each class
+wine_class <- table(wine_data$Class)
+wine_class
+```
+
+（b）As shown above, the number of wine within each class is correct as reported in "wine_names"
+
+```{r}
+# Calculate the correlation between alcohol content and color intensity
+cor_1 <- cor(wine_data$Alcohol,wine_data$Color_intensity)
+cor_1
+```
+
+```{r}
+# Calculate the correlation by class
+library(dplyr)
+
+wine_data %>%
+  group_by(Class) %>%
+  summarize(correlation = cor(Alcohol, Color_intensity))
+```
+
+```{r}
+# Find the alcohol content of the wine with the highest color intensity
+max_color_intensity <- max(wine_data$Color_intensity)
+wine_data$Alcohol[wine_data$Color_intensity == max_color_intensity]
+```
+
+```{r}
+# Calculate the percentage of wines that had a higher content of proanthocyanins compare to ash
+percentage <- sum(wine_data$Proanthocyanins > wine_data$Ash)/nrow(wine_data)
+percentage
+```
+
+\(c\) 1. The correlation between alcohol content and color intensity is 0.55.
+
+2.  Class 1 has the highest correlation and Class 2 has the lowest.
+3.  The alcohol content of the wine with the highest color intensity is 14.34.
+4.  8.43% of wines had a higher content of proanthocyanins compare to ash.
+
+```{r}
+# Calculate the average value of each variable
+avg_1 <- colMeans(wine_data[-1])
+
+# Calculate the average value of each variable by class
+avg_2 <- wine_data %>%
+  group_by(Class) %>%
+  summarize(across(everything(),mean))
+
+# Create one column for variable names and bind them together
+column_1 <- data.frame(class = c("overall", 1, 2, 3))
+avg_table_1 <- bind_rows(avg_1, avg_2)
+avg_table <- bind_cols(column_1, avg_table_1)
+
+print(avg_table)
+```
+
+```{r}
+# Carry out t-tests to examine whether the level of phenols differs across the three classes.
+t_test_12 <- t.test(wine_data$Total_phenols[wine_data$Class == 1], wine_data$Total_phenols[wine_data$Class == 2])
+t_test_13 <- t.test(wine_data$Total_phenols[wine_data$Class == 1], wine_data$Total_phenols[wine_data$Class == 3])
+t_test_23 <- t.test(wine_data$Total_phenols[wine_data$Class == 2], wine_data$Total_phenols[wine_data$Class == 3])
+
+t_test_12
+t_test_13
+t_test_23
+
+```
+
+```{r}
+# Manually conduct t-tests
+t_test <- function(x,y){
+  n_1 = length(x)
+  n_2 = length(y)
+  # Calculate t values
+  t_value = (mean(x) - mean(y))/sqrt((var(x)/n_1 + (var(y)/n_2)))
+  # Calculate df
+  df <- ((var(x) / n_1) + (var(y) / n_2))^2 / ((var(x)^2 / ((n_1^2) * (n_1 - 1))) + (var(y)^2 / ((n_2^2) * (n_2 - 1))))
+  # Calculate p values
+  p_value <- 2 * pt(-abs(t_value), df)
+  return(list(t_value = t_value, df = df, p_value = p_value))
+}
+
+print("******t-test 12")
+t_12 = t_test(wine_data$Total_phenols[wine_data$Class == 1], wine_data$Total_phenols[wine_data$Class == 2])
+print(t_12)
+print("******t-test 13")
+t_13 = t_test(wine_data$Total_phenols[wine_data$Class == 1], wine_data$Total_phenols[wine_data$Class == 3])
+print(t_13)
+print("******t-test 23")
+t_23 = t_test(wine_data$Total_phenols[wine_data$Class == 2], wine_data$Total_phenols[wine_data$Class == 3])
+print(t_23)
+```
+
+\(e\) According to the p-value, the three classes of wine show significant differences at the 1% significance level.
+
+## **Problem 2 - AskAManager.org Data**
+
+```{r}
+# Import the dataset
+AskAManager <- read.csv('/Users/aa/Desktop/Umich/Stats 506/Assignment 1/AskAManager.csv')
+
+# Simplify the variable names
+colnames(AskAManager) <- c('X','Time','Age','Industry','Job','Job_additional','Annual_salary','Salary_compensation','Currency','Other_currency','Income_additional','Country','State','City','Overall_experience','Specific_experience','Education','Gender','Race')
+```
+
+```{r}
+# Restrict data to USD
+num_before <- nrow(AskAManager)
+num_after <- nrow(AskAManager[AskAManager$Currency == 'USD',])
+print(paste("Orignal number of observations:",num_before))
+print(paste("Filtered number of observations:",num_after))
+```
+
+```{r}
+# Create ordered factor variables for age and work experience
+age <- ordered(AskAManager$Age,levels = c('18-24','25-34','35-44','45-54','55-64','65 or over'))
+overall_experience <- ordered(AskAManager$Overall_experience, levels = c('1 year or less','2 - 4 years','5-7 years','8 - 10 years','11 - 20 years','21 - 30 years','31 - 40 years','41 years or more'))
+specific_experience <- ordered(AskAManager$Specific_experience, levels = c('1 year or less','2 - 4 years','5-7 years','8 - 10 years','11 - 20 years','21 - 30 years','31 - 40 years','41 years or more'))
+```
+
+```{r}
+# Create expected experience for each age interval
+expected_experience <- c('18-24' = '2 - 4 years',
+                       '25-34' = '8 - 10 years',
+                       '35-44' = '11 - 20 years',
+                       '45-54' = '21 - 30 years',
+                       '55-64' = '31 - 40 years',
+                       '65 or over' = '41 years or more')
+
+AskAManager$Expected_experience <- expected_experience[AskAManager$Age]
+
+# Set filtered condition
+valid_rows <- with(AskAManager, 
+                   Age != 'under 18'&
+                   Overall_experience <= Expected_experience &
+                   Specific_experience <= Overall_experience)
+
+AskAManager_filtered_1 <- AskAManager[valid_rows, ]
+
+# Confirm the number of observations
+num_observations <- nrow(AskAManager_filtered_1)
+print(paste("Orignal number of observations:",num_before))
+print(paste("Filtered number of observations:", num_observations))
+```
+
+```{r}
+# According to the U.S. Department of Labor, the minimum wage in 2021 is $7.25, assuming a 40-hour workweek.The lower limit of annual salary is 7.25*40*52
+low_limit = 7.25 * 40 * 52
+
+# According to the Economic Policy Institute, the average annual wages of someone in top 0.1% was $3,312,693 in 2021
+up_limit = 3312693
+
+AskAManager_filtered_2 <- AskAManager_filtered_1[AskAManager_filtered_1$Annual_salary >= low_limit & AskAManager_filtered_1$Annual_salary <= up_limit, ]
+
+num_final <- nrow(AskAManager_filtered_2)
+print(paste("Final number of observations:", num_final))
+```
+
+## **Problem 3 - Palindromic Numbers**
+
+```{r}
+isPalindromic <- function(num){
+  # Check if it is an invalid input
+  if (!is.numeric(num) || num <= 0 || floor(num) != num){
+    stop('Invalid input: this is not a postive integer.')
+  }
+  # Change the number to string
+  num_str <- as.character(num)
+  # Reverse the string
+  reversed_str <- paste(rev(unlist(strsplit(num_str,NULL))),collapse="")
+  # Change the string to number
+  reversed_num <- as.numeric(reversed_str)
+  # Examine if it is a palindromic number
+  ispalindromic <- num == reversed_num
+  # Return the output
+  return(list(isPalindromic = ispalindromic, reversed = reversed_num))
+}
+
+isPalindromic(728827)
+isPalindromic(39951)
+```
+
+```{r}
+nextPalindrome <- function(num){
+  # Check if it is an invalid input
+  if (!is.numeric(num) || num <= 0 || floor(num) != num){
+    stop('Invalid input: this is not a postive integer.')
+  }
+  # Check from the next number of num
+  next_num <- num + 1
+  # Loop until we find the next palindromic number
+  while(!isPalindromic(next_num)$isPalindromic){
+    next_num <- next_num + 1
+  }
+  # Return the output
+  return(next_num)
+  }
+  
+nextPalindrome(391)
+nextPalindrome(9928)
+nextPalindrome(19272719)
+nextPalindrome(109)
+nextPalindrome(2)
+```
