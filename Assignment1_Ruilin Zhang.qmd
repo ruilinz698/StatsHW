@@ -7,7 +7,7 @@ format:
 editor: visual
 ---
 
-## Github Link <https://github.com/ruilinz698/Stats-506/blob/main/Assignment1_Ruilin%20Zhang.qmd>
+## Github Link <https://github.com/ruilinz698/StatsHW/blob/main/Assignment1_Ruilin%20Zhang.qmd>
 
 ## Problem 1 - Wine Data
 
